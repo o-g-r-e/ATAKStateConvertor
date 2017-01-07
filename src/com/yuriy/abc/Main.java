@@ -34,6 +34,6 @@ public class Main {
 		if(srcFileName != null)
 			new ReportProcessor(srcFileName).doIt();*/
 		
-		new Controller(new ReportProcessor(), new ATAKStateWindow());
+		new MainController(new ReportProcessor(), new MainViewManager(new MainWindow()));
 	}
 }

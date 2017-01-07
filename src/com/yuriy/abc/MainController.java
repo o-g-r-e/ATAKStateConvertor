@@ -7,15 +7,17 @@ import java.util.Observable;
 
 import javax.swing.JOptionPane;
 
-public class Controller extends Observable implements ATAKStateWindow.Listener {
+public class MainController implements MainWindow.Listener {
 	
-	ReportProcessor rp;
+	ReportProcessor reportProcessor;
+	MainViewManager mainViewManager;
 	
-	Controller(ReportProcessor rp, ATAKStateWindow window)
+	MainController(ReportProcessor reportProcessor, MainViewManager mainViewManager)
 	{
-		this.rp = rp;
-		window.addListener(this);
-		this.rp.addObserver(window);
+		this.reportProcessor = reportProcessor;
+		this.mainViewManager = mainViewManager;
+		this.mainViewManager.addMainWindowListener(this);
+		this.reportProcessor.addObserver(this.mainViewManager.getMainWindow());
 	}
 
 	@Override
@@ -23,10 +25,10 @@ public class Controller extends Observable implements ATAKStateWindow.Listener {
 		new Thread(new Runnable() {
 			public void run() {
 			   try {
-					rp.doIt();
+					reportProcessor.process();
 				} catch (Exception e) {
 					//e.printStackTrace();
-					JOptionPane.showMessageDialog(null, getStackTrace(e), "Exception", JOptionPane.ERROR_MESSAGE);
+					mainViewManager.showException(getStackTrace(e));
 				}
 			}
 		}).start();
@@ -34,7 +36,7 @@ public class Controller extends Observable implements ATAKStateWindow.Listener {
 
 	@Override
 	public void onFlieLoaded(String fileName) {
-		rp.setSourceFileName(fileName);
+		reportProcessor.setSourceFileName(fileName);
 	}
 	
 	private String getStackTrace(Throwable throwable) {

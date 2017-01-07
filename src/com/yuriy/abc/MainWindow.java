@@ -18,7 +18,7 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
-public class ATAKStateWindow implements Observer
+public class MainWindow implements Observer
 {	
 	private File srcFile;
 	private JLabel chooseFileLabel;
@@ -42,7 +42,7 @@ public class ATAKStateWindow implements Observer
 		this.listener = listener;
 	}
 	
-	public ATAKStateWindow()
+	public MainWindow()
 	{
 		frame = new JFrame("Отчет по постановкам и снятиям АТАК");
 		frame.setBounds(100,100,500,250);
@@ -63,6 +63,7 @@ public class ATAKStateWindow implements Observer
 		container.add(fileTextField);
 		
 		progressTextArea = new JTextArea(0,0);
+		progressTextArea.setEditable(false);
 		progressScrollPane = new JScrollPane(progressTextArea);
 		progressScrollPane.setBounds(0,150,495,123);
 		progressScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -94,7 +95,7 @@ public class ATAKStateWindow implements Observer
 		
 		chooseFileButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                JFileChooser fileopen = new JFileChooser();
+                JFileChooser fileopen = new JFileChooser(new File("."));
                 fileopen.setFileFilter(new ExcelFilesFilter());
                 int ret = fileopen.showDialog(null, "Открыть файл");                
                 if (ret == JFileChooser.APPROVE_OPTION) {

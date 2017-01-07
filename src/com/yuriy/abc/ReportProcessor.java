@@ -29,15 +29,6 @@ public class ReportProcessor extends Observable
 		this.sourceFileName = fileName;
 	}
 	
-	private static Row createNewRow(Sheet sheet, int newRowIndex, int rowLength)
-	{
-		Row newRow = sheet.createRow(newRowIndex);
-		for (int i = 0; i < rowLength; i++) {
-			newRow.createCell(i);
-		}
-		return newRow;
-	}
-	
 	private static int getSecondNameIndex(String value)
 	{
 		int startIndex = 0;
@@ -59,7 +50,50 @@ public class ReportProcessor extends Observable
 		return index;
 	}
 	
-	public void doIt() throws IOException
+	private Row createRow(Sheet sheet, CellStyle style, String[] data, int rowIndex)
+	{
+		Row row = sheet.createRow(rowIndex);
+		
+		for (int i = 0; i < data.length; i++)
+		{
+			row.createCell(i);
+			
+			if(style != null)
+				row.getCell(i).setCellStyle(style);
+			
+			if(data != null && data.length > 0 && i < data.length)
+				row.getCell(i).setCellValue(data[i]);
+		}
+		
+		return row;
+	}
+	
+	private Row createRow(Sheet sheet, CellStyle style, int rowLength, int rowIndex)
+	{
+		Row row = sheet.createRow(rowIndex);
+		
+		for (int i = 0; i < rowLength; i++)
+		{
+			row.createCell(i);
+			
+			if(style != null)
+				row.getCell(i).setCellStyle(style);
+		}
+		
+		return row;
+	}
+	
+	private void setRowData(Row row, String[] data)
+	{
+		if(row == null || row.getLastCellNum() <= 0 || data == null || data.length <= 0 || row.getLastCellNum() < data.length)
+			return;
+		
+		for (int i = 0; i < data.length; i++) {
+			row.getCell(i).setCellValue(data[i]);
+		}
+	}
+	
+	public void process() throws IOException
 	{
 		workBook = new HSSFWorkbook(new FileInputStream(sourceFileName));
 		
@@ -76,25 +110,7 @@ public class ReportProcessor extends Observable
 	    font.setBoldweight(Font.BOLDWEIGHT_BOLD);
 	    style.setFont(font);
 	    
-		Row headRow = createNewRow(destSheet, 0, 9);
-		headRow.getCell(0).setCellValue("Название");
-		headRow.getCell(0).setCellStyle(style);
-		headRow.getCell(1).setCellValue("Дата");
-		headRow.getCell(1).setCellStyle(style);
-		headRow.getCell(2).setCellValue("Время");
-		headRow.getCell(2).setCellStyle(style);
-		headRow.getCell(3).setCellValue("Код");
-		headRow.getCell(3).setCellStyle(style);
-		headRow.getCell(4).setCellValue("Событие");
-		headRow.getCell(4).setCellStyle(style);
-		headRow.getCell(5).setCellValue("ШП");
-		headRow.getCell(5).setCellStyle(style);
-		headRow.getCell(6).setCellValue("Событие");
-		headRow.getCell(6).setCellStyle(style);
-		headRow.getCell(7).setCellValue("Субъект");
-		headRow.getCell(7).setCellStyle(style);
-		headRow.getCell(8).setCellValue("Канал");
-		headRow.getCell(8).setCellStyle(style);
+		Row headRow = createRow(destSheet, style, new String[]{"Название", "Дата", "Время", "Код", "Событие", "ШП", "Описание", "Субъект", "Канал"}, 0);
 		
 		for (int i = 0; i < srcSheet.getLastRowNum(); i++) {
 			Row currentSrcRow = srcSheet.getRow(i);
@@ -153,10 +169,10 @@ public class ReportProcessor extends Observable
 			if("".equals(srcCode) && "".equals(srcEvent) && "".equals(srcHP) && "".equals(srcDesc))
 				continue;
 			
-			Row currentDestRow = createNewRow(destSheet, newRowsNumber, 9);
+			Row currentDestRow = createRow(destSheet, null, 9, newRowsNumber);
 			newRowsNumber++;
 			
-			Cell objNameCell = currentDestRow.getCell(0);
+			/*Cell objNameCell = currentDestRow.getCell(0);
 			Cell dateCell    = currentDestRow.getCell(1);
 			Cell timeCell    = currentDestRow.getCell(2);
 			Cell codeCell    = currentDestRow.getCell(3);
@@ -171,19 +187,27 @@ public class ReportProcessor extends Observable
 			timeCell.   setCellValue(srcTime);
 			codeCell.   setCellValue(srcCode);
 			eventCell.  setCellValue(srcEvent);
-			hpCell.     setCellValue(srcHP);
+			hpCell.     setCellValue(srcHP);*/
 			
+			String resultDesc = "";
+			String resultClientSecondName = "";
 			int secondNameIndex = getSecondNameIndex(srcDesc);
 			if(secondNameIndex >= 0)
 			{
-				descCell.setCellValue(srcDesc.substring(0, secondNameIndex));
-				clientSecondNameCell.setCellValue(srcDesc.substring(secondNameIndex, srcDesc.length()));
+				//descCell.setCellValue(srcDesc.substring(0, secondNameIndex));
+				resultDesc = srcDesc.substring(0, secondNameIndex);
+				//clientSecondNameCell.setCellValue(srcDesc.substring(secondNameIndex, srcDesc.length()));
+				resultClientSecondName = srcDesc.substring(secondNameIndex, srcDesc.length());
 			}
 			else
 			{
-				descCell.setCellValue(srcDesc);
+				//descCell.setCellValue(srcDesc);
+				resultDesc = srcDesc;
 			}
-			channelCell.setCellValue(srcChannel);
+			//channelCell.setCellValue(srcChannel);
+			
+			setRowData(currentDestRow, new String[]{objName, srcDate, srcTime, srcCode, srcEvent, srcHP, resultDesc, resultClientSecondName, srcChannel});
+			
 			//System.out.print(writeProgress("Process...", i, srcSheet.getLastRowNum()));
 			//updateInterface(Math.round(((float)i*100.0f)/(float)srcSheet.getLastRowNum()));
 			
