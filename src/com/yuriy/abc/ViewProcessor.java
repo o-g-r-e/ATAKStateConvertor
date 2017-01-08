@@ -1,23 +1,19 @@
 package com.yuriy.abc;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Observable;
 
-import javax.swing.JOptionPane;
-
-public class MainController implements MainWindow.Listener {
+public class ViewProcessor implements MainWindow.WindowEventsListener {
 	
 	ReportProcessor reportProcessor;
-	MainViewManager mainViewManager;
+	MainWindow mainWindow;
 	
-	MainController(ReportProcessor reportProcessor, MainViewManager mainViewManager)
+	ViewProcessor(ReportProcessor reportProcessor, MainWindow mainWindow)
 	{
 		this.reportProcessor = reportProcessor;
-		this.mainViewManager = mainViewManager;
-		this.mainViewManager.addMainWindowListener(this);
-		this.reportProcessor.addObserver(this.mainViewManager.getMainWindow());
+		this.mainWindow = mainWindow;
+		this.mainWindow.addListener(this);
+		this.reportProcessor.addObserver(this.mainWindow);
 	}
 
 	@Override
@@ -28,7 +24,7 @@ public class MainController implements MainWindow.Listener {
 					reportProcessor.process();
 				} catch (Exception e) {
 					//e.printStackTrace();
-					mainViewManager.showException(getStackTrace(e));
+					mainWindow.showException(getStackTrace(e));
 				}
 			}
 		}).start();

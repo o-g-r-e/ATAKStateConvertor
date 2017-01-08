@@ -34,6 +34,6 @@ public class Main {
 		if(srcFileName != null)
 			new ReportProcessor(srcFileName).doIt();*/
 		
-		new MainController(new ReportProcessor(), new MainViewManager(new MainWindow()));
+		new ViewProcessor(new ReportProcessor(), new MainWindow());
 	}
 }

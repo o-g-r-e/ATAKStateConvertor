@@ -1,5 +1,7 @@
 package com.yuriy.abc;
 
+import java.awt.Desktop;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -16,13 +18,13 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
+import com.yuriy.abc.MainWindow.ViewCommand;
+
 public class ReportProcessor extends Observable
 {
 	private String sourceFileName;
 	private HSSFWorkbook workBook;
 	private static final String OUTPUT_SHEET_NAME = "Постановки-Снятия";
-	private String processText = "";
-	private String processTextPortion = "";
 	
 	public void setSourceFileName(String fileName)
 	{
@@ -110,7 +112,7 @@ public class ReportProcessor extends Observable
 	    font.setBoldweight(Font.BOLDWEIGHT_BOLD);
 	    style.setFont(font);
 	    
-		Row headRow = createRow(destSheet, style, new String[]{"Название", "Дата", "Время", "Код", "Событие", "ШП", "Описание", "Субъект", "Канал"}, 0);
+		createRow(destSheet, style, new String[]{"Название", "Дата", "Время", "Код", "Событие", "ШП", "Описание", "Субъект", "Канал"}, 0);
 		
 		for (int i = 0; i < srcSheet.getLastRowNum(); i++) {
 			Row currentSrcRow = srcSheet.getRow(i);
@@ -208,27 +210,18 @@ public class ReportProcessor extends Observable
 			
 			setRowData(currentDestRow, new String[]{objName, srcDate, srcTime, srcCode, srcEvent, srcHP, resultDesc, resultClientSecondName, srcChannel});
 			
-			//System.out.print(writeProgress("Process...", i, srcSheet.getLastRowNum()));
-			//updateInterface(Math.round(((float)i*100.0f)/(float)srcSheet.getLastRowNum()));
-			
-			processTextPortion = writeProgress("Process...", i, srcSheet.getLastRowNum());
-			updateInterface(processText + processTextPortion);
+			//System.out.print(writeProgress("\rProcess...", i, srcSheet.getLastRowNum()));
+			updateInterface(new ViewCommand(0, writeProgress("Process...", i, srcSheet.getLastRowNum())));
 		}
 		
 		//System.out.println("");
-		processText = processText+processTextPortion+"\n";
-		updateInterface(processText);
 		
 		for (int j = 0; j < destSheet.getRow(0).getLastCellNum(); j++) {
 			destSheet.autoSizeColumn(j);
-			//System.out.print(writeProgress("Resize...", j, destSheet.getRow(0).getLastCellNum()-1));
-			//updateInterface(Math.round(((float)j*100.0f)/(float)destSheet.getRow(0).getLastCellNum()-1));
-			processTextPortion = writeProgress("Resize...", j, destSheet.getRow(0).getLastCellNum()-1);
-			updateInterface(processText + processTextPortion);
+			//System.out.print(writeProgress("\rResize...", j, destSheet.getRow(0).getLastCellNum()-1));
+			updateInterface(new ViewCommand(1, writeProgress("Resize...", j, destSheet.getRow(0).getLastCellNum()-1)));
 		}
-		
-		processText = processText+processTextPortion+"\nComplete!";
-		updateInterface(processText);
+		updateInterface(new ViewCommand(2, "Complete!"));
 		
 		workBook.removeSheetAt(0);
 		workBook.setSheetOrder(OUTPUT_SHEET_NAME, 0);
@@ -236,17 +229,19 @@ public class ReportProcessor extends Observable
 		FileOutputStream out = new FileOutputStream(sourceFileName);
 		workBook.write(out);
 		out.close();
+		
+		Desktop.getDesktop().open(new File(sourceFileName));
 	}
 	
 	private String writeProgress(String word, int n, int max)
 	{
 		int p = Math.round(((float)n*100.0f)/(float)max);
-		return "\r"+word+p+"%";
+		return word+p+"%";
 	}
 	
-	private void updateInterface(String message)
+	private void updateInterface(ViewCommand viewCommand)
 	{
-		notifyObservers(message);
+		notifyObservers(viewCommand);
 		setChanged();
 	}
 }

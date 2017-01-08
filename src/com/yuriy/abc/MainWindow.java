@@ -11,12 +11,14 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileFilter;
 
 public class MainWindow implements Observer
 {	
@@ -29,15 +31,57 @@ public class MainWindow implements Observer
 	private JScrollPane progressScrollPane;
 	private JButton startButton;
 	private JFrame frame;
-	private Listener listener;
+	private WindowEventsListener listener;
 	
-	interface Listener
+	private class ExcelFilesFilter extends FileFilter {
+
+		@Override
+		public boolean accept(File file) {
+			
+			return file.getAbsolutePath().endsWith(".xls") || file.getAbsolutePath().endsWith(".xlsx") || file.isDirectory();
+		}
+
+		@Override
+		public String getDescription() {
+			
+			return "Excel documents (*.xls, *.xlsx)";
+		}
+	}
+	
+	static class ViewCommand {
+		
+		int line;
+		private String data;
+		
+		public ViewCommand(int line, String data) {
+			this.line = line;
+			this.data = data;
+		}
+
+		public int getLine() {
+			return line;
+		}
+
+		public void setLine(int line) {
+			this.line = line;
+		}
+
+		public String getData() {
+			return data;
+		}
+
+		public void setData(String data) {
+			this.data = data;
+		}
+	}
+	
+	interface WindowEventsListener
 	{
 		public void onStartButtonClick();
 		public void onFlieLoaded(String fileName);
 	}
 	
-	public void addListener(Listener listener)
+	public void addListener(WindowEventsListener listener)
 	{
 		this.listener = listener;
 	}
@@ -95,11 +139,11 @@ public class MainWindow implements Observer
 		
 		chooseFileButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                JFileChooser fileopen = new JFileChooser(new File("."));
-                fileopen.setFileFilter(new ExcelFilesFilter());
-                int ret = fileopen.showDialog(null, "Открыть файл");                
+                JFileChooser fileChooser = new JFileChooser(new File("."));
+                fileChooser.setFileFilter(new ExcelFilesFilter());
+                int ret = fileChooser.showDialog(null, "Открыть файл");                
                 if (ret == JFileChooser.APPROVE_OPTION) {
-                    fileLoaded(fileopen.getSelectedFile());
+                    fileLoaded(fileChooser.getSelectedFile());
                     listener.onFlieLoaded(srcFile.getAbsolutePath());
                 }
             }
@@ -136,14 +180,46 @@ public class MainWindow implements Observer
 		
 		return button;
 	}
+	
+	public void showException(String exceptionMessage)
+	{
+		JOptionPane.showMessageDialog(null, exceptionMessage, "Exception", JOptionPane.ERROR_MESSAGE);
+	}
 
 	@Override
 	public void update(Observable arg0, Object message) {
-		String sMessage = (String)message;
+		
+		ViewCommand viewCommand = (ViewCommand)message;
 		
 		SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-            	progressTextArea.setText(sMessage);
+            	
+            	String progressText = progressTextArea.getText();
+            	
+            	String[] lines = progressText.split("\n");
+        		
+        		if(lines.length == 1 && lines[0].equals(""))
+        		{
+        			progressText = viewCommand.getData()+"\n";
+        		}
+        		else
+        		{
+            		if(lines.length > viewCommand.getLine())
+            		{
+            			lines[viewCommand.getLine()] = viewCommand.getData();
+            			progressText = "";
+            			for (int i = 0; i < lines.length; i++) {
+                			progressText += lines[i]+(i<lines.length-1?"\n":"");
+    					}
+            		}
+            		else
+            		{
+            			progressText += "\n"+viewCommand.getData();
+            		}
+        		}
+            	
+            	progressTextArea.setText(progressText);
+            	//progressTextArea.setText(sMessage);
             }
         });
 	}
