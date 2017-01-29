@@ -230,7 +230,7 @@ public class ReportProcessor extends Observable
 		workBook.write(out);
 		out.close();
 		
-		Desktop.getDesktop().open(new File(sourceFileName));
+		Desktop.getDesktop().open(new File(sourceFileName).getParentFile());
 	}
 	
 	private String writeProgress(String word, int n, int max)

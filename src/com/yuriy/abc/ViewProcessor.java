@@ -21,11 +21,14 @@ public class ViewProcessor implements MainWindow.WindowEventsListener {
 		new Thread(new Runnable() {
 			public void run() {
 			   try {
-					reportProcessor.process();
-				} catch (Exception e) {
-					//e.printStackTrace();
-					mainWindow.showException(getStackTrace(e));
-				}
+				   reportProcessor.process();
+			   } catch (Exception e) {
+				   //e.printStackTrace();
+				   mainWindow.showException(getStackTrace(e));
+			   } finally
+			   {
+					System.exit(0);
+			   }
 			}
 		}).start();
 	}
